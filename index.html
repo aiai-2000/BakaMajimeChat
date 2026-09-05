@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>バカ真面目チャット</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #d9d9d9;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    }
+
+    .chat {
+      width: 100%;
+      max-width: 500px;
+      height: 100vh;
+      margin: auto;
+      background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: white;
+      padding: 14px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .header-title {
+      font-weight: bold;
+      font-size: 17px;
+    }
+
+    .status {
+      font-size: 11px;
+      color: #777;
+      margin-top: 3px;
+    }
+
+    .messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+    }
+
+    .message {
+      padding: 10px 14px;
+      border-radius: 18px;
+      margin-bottom: 10px;
+      max-width: 75%;
+      word-wrap: break-word;
+    }
+
+    .message.me {
+      margin-left: auto;
+      background: #c9f7b5;
+    }
+
+    .message.other {
+      margin-right: auto;
+      background: white;
+    }
+
+    .time {
+      font-size: 9px;
+      color: #888;
+      margin-top: 3px;
+    }
+
+    .input-area {
+      display: flex;
+      gap: 6px;
+      padding: 9px;
+      background: white;
+      border-top: 1px solid #ddd;
+    }
+
+    select {
+      border: 1px solid #ccc;
+      border-radius: 15px;
+      padding: 5px;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      padding: 10px 14px;
+      font-size: 14px;
+    }
+
+    button {
+      border: none;
+      border-radius: 20px;
+      padding: 0 14px;
+      background: #555;
+      color: white;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="chat">
+
+    <div class="header">
+      <div class="header-title">バカ真面目チャット</div>
+      <div class="status">オンライン</div>
+    </div>
+
+    <div id="messages" class="messages"></div>
+
+    <div class="input-area">
+      <select id="sender">
+        <option value="me">自分</option>
+        <option value="other">相手</option>
+      </select>
+
+      <input id="messageInput" type="text" placeholder="メッセージを入力">
+
+      <button id="sendButton">送信</button>
+    </div>
+
+  </div>
+
+  <script type="module">
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBYl8R02lkmER_CCzG_qfY8I6T02mXXMto",
+  authDomain: "bakamajimechat.firebaseapp.com",
+  projectId: "bakamajimechat",
+  storageBucket: "bakamajimechat.firebasestorage.app",
+  messagingSenderId: "401653415120",
+  appId: "1:401653415120:web:d3ad435b9ce77eeb9af2d5"
+    };
+
+    const firebaseApp = await import(
+      "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js"
+    );
+
+    const firestore = await import(
+      "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js"
+    );
+
+    const { initializeApp } = firebaseApp;
+
+    const {
+      getFirestore,
+      collection,
+      addDoc,
+      query,
+      orderBy,
+      onSnapshot,
+      serverTimestamp
+    } = firestore;
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const messages = document.getElementById("messages");
+    const input = document.getElementById("messageInput");
+    const sender = document.getElementById("sender");
+    const button = document.getElementById("sendButton");
+
+    function showMessage(data) {
+
+      const message = document.createElement("div");
+      message.className = "message " + data.sender;
+
+      const textElement = document.createElement("div");
+      textElement.textContent = data.text;
+
+      const timeElement = document.createElement("div");
+      timeElement.className = "time";
+
+      if (data.createdAt) {
+        const date = data.createdAt.toDate();
+
+        timeElement.textContent =
+          date.getHours().toString().padStart(2, "0") +
+          ":" +
+          date.getMinutes().toString().padStart(2, "0");
+      }
+
+      message.appendChild(textElement);
+      message.appendChild(timeElement);
+
+      messages.appendChild(message);
+    }
+
+    const messagesQuery = query(
+      collection(db, "messages"),
+      orderBy("createdAt")
+    );
+
+    onSnapshot(messagesQuery, (snapshot) => {
+
+      messages.innerHTML = "";
+
+      snapshot.forEach((doc) => {
+        showMessage(doc.data());
+      });
+
+      messages.scrollTop = messages.scrollHeight;
+    });
+
+    async function sendMessage() {
+
+      let text = input.value.trim();
+
+      if (text === "") return;
+
+      text = text.replace(/バカ(?!真面目)/g, "バカ真面目");
+
+      await addDoc(collection(db, "messages"), {
+        text: text,
+        sender: sender.value,
+        createdAt: serverTimestamp()
+      });
+
+      input.value = "";
+    }
+
+    button.addEventListener("click", sendMessage);
+
+    input.addEventListener("keydown", (event) => {
+
+      if (event.key === "Enter") {
+        sendMessage();
+      }
+
+    });
+
+  </script>
+
+</body>
+</html>
