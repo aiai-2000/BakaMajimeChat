@@ -120,10 +120,6 @@
     <div id="messages" class="messages"></div>
 
     <div class="input-area">
-      <select id="sender">
-        <option value="me">自分</option>
-        <option value="other">相手</option>
-      </select>
 
       <input id="messageInput" type="text" placeholder="メッセージを入力">
 
@@ -175,7 +171,6 @@ if (userName) {
 }
     
     const input = document.getElementById("messageInput");
-    const sender = document.getElementById("sender");
     const button = document.getElementById("sendButton");
 
     function showMessage(data) {
@@ -184,7 +179,7 @@ if (userName) {
       nameElement.style.fontWeight = "bold";
       
       const message = document.createElement("div");
-      message.className = "message " + data.sender;
+      message.className = "message " + (data.name === userName ? "me" : "other");
 
       message.appendChild(nameElement);
       
@@ -235,7 +230,6 @@ if (userName) {
 
       await addDoc(collection(db, "messages"), {
         text: text,
-        sender: sender.value,
         name: userName,
         createdAt: serverTimestamp()
       });
