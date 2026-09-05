@@ -167,15 +167,27 @@
     const db = getFirestore(app);
 
     const messages = document.getElementById("messages");
+
+const userName = localStorage.getItem("userName") || prompt("あなたの名前を入力してください");
+
+if (userName) {
+  localStorage.setItem("userName", userName);
+}
+    
     const input = document.getElementById("messageInput");
     const sender = document.getElementById("sender");
     const button = document.getElementById("sendButton");
 
     function showMessage(data) {
-
+      const nameElement = document.createElement("div");
+      nameElement.textContent = data.name || "名前なし";
+      nameElement.style.fontWeight = "bold";
+      
       const message = document.createElement("div");
       message.className = "message " + data.sender;
 
+      message.appendChild(nameElement);
+      
       const textElement = document.createElement("div");
       textElement.textContent = data.text;
 
@@ -224,6 +236,7 @@
       await addDoc(collection(db, "messages"), {
         text: text,
         sender: sender.value,
+        name: userName,
         createdAt: serverTimestamp()
       });
 
